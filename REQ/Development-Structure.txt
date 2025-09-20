@@ -1,0 +1,148 @@
+# PRD و System Design برای سیستم کامپوننت‌های داینامیک در پروژه Vue.js
+
+## مقدمه
+این سند شامل **Product Requirements Document (PRD)** و **System Design** برای ایجاد یک سیستم کامپوننت‌های داینامیک در پروژه Vue.js شرکت است. هدف اصلی، استانداردسازی طراحی و پیاده‌سازی کامپوننت‌ها است تا هر کامپوننتی که ساخته می‌شود، قابل استفاده مجدد، شخصی‌سازی آسان و سازگار با ساختار پروژه شرکت (بر اساس فایل `structure.txt` که محتوای PDF `front_structure.pdf` را توصیف می‌کند) باشد.
+
+این سیستم بر پایه اصول داینامیک بودن تمرکز دارد: تم‌های رنگی، داده‌ها، UI/UX عناصر (مانند combobox/select)، و هر ویژگی قابل تنظیم باید از طریق props، emits، یا store مدیریت شوند. این رویکرد اجازه می‌دهد کامپوننت‌ها بدون نیاز به تغییر کد داخلی، در هر جایی از پروژه import شوند و شخصی‌سازی گردند.
+
+**فرضیات کلیدی:**
+- پروژه بر پایه Vue.js (با TypeScript، Vue Router، Pinia، و احتمالاً Vuetify یا مشابه برای UI) است.
+دیزاین ها باید با کتابخانه ant-design هماهنگ باشند .
+- ساختار پروژه بر اساس فایل `structure.txt` شامل folders مانند `src/components` (برای کامپوننت‌های مشترک)، `src/models` (برای interfaces/types)، `src/views` (برای صفحات)، `src/router` (برای routes)، `src/store` (برای state مدیریت)، `src/api` (برای API calls)، `src/policy` (برای دسترسی‌ها)، و `plugins` (برای config تم‌ها) است.
+- کامپوننت‌ها باید مدرن، responsive، و RTL-compatible باشند (با توجه به پشتیبانی RTL در ساختار، مانند Vuetify یا Tailwind).
+- این سیستم برای هر کامپوننتی با هر مفهومی (مانند Button، Table، Form، Modal، Chart، etc.) قابل استفاده است.
+
+**دامنه (Scope):**
+- تمرکز روی کامپوننت‌های frontend (Vue components).
+- ادغام با backend از طریق API (با استفاده از Axios در `src/api`).
+- خارج از دامنه: backend implementation، testing frameworks (هرچند ESLint در ساختار پیشنهاد شده).
+
+**ذینفعان:**
+- توسعه‌دهندگان frontend: برای ساخت و استفاده از کامپوننت‌ها.
+- طراحان UI/UX: برای تعریف تم‌ها و mockups.
+- مدیران پروژه: برای استانداردسازی و scalability.
+
+## Product Requirements Document (PRD)
+
+### 1. اهداف محصول
+- ایجاد کامپوننت‌هایی که ۱۰۰% داینامیک و reusable باشند، تا توسعه‌دهندگان بتوانند آن‌ها را import کنند و با props/emit شخصی‌سازی نمایند بدون تغییر کد داخلی.
+- سازگاری کامل با ساختار پروژه (فایل `structure.txt`): کامپوننت‌ها در `src/components` قرار گیرند، models در `src/models`، store برای داده‌های عمومی، API calls در `src/api`، و policy برای دسترسی‌ها.
+- پشتیبانی از تم رنگی داینامیک (dynamic theming) برای تغییر آسان رنگ‌ها، فونت‌ها، و استایل‌ها بر اساس mode (light/dark) یا محیط (dev/prod).
+- داینامیک بودن داده‌ها: هر عنصری مانند combobox، list، یا input باید از props داده بگیرد و emits برای رویدادها استفاده کند.
+- استایل مدرن: استفاده از CSS modern (variables, grid/flexbox)، responsive design (با media queries)، و اگر UI mockup داده شود (مثل Figma)، دقیقاً مطابق آن پیاده‌سازی شود.
+
+### 2. ویژگی‌های کلیدی (Key Features)
+- **داینامیک بودن تم رنگی:**
+  - تم‌ها از فایل config در `plugins` (مثل `plugins/vuetify.ts` در ساختار) لود شوند.
+  - props مانند `theme` (string: 'light'|'dark'|'custom') برای تغییر تم.
+  - استفاده از CSS variables (مانند `--v-theme-primary` در ساختار) برای رنگ‌ها، تا تغییر تم بدون reload صفحه ممکن باشد.
+  
+- **داینامیک بودن عناصر UI:**
+  - برای combobox/select: props مانند `items` (array of objects/strings)، `itemValue` (key for value)، `itemTitle` (key for display)، `multiple` (boolean).
+  - برای هر داده‌ای که قابلیت داینامیک دارد (مثل lists, forms, charts): props برای data input (e.g., `data: Array<T>` یا `options: Object`)، و emits برای خروجی (e.g., `@select="handleSelect"`).
+  
+- **نام‌گذاری props و emits:**
+  - ساده، شفاف، و مفهومی: e.g., `label` برای متن نمایش، `value` برای مقدار، `disabled` برای غیرفعال کردن، `onClick` برای emit click.
+  - اجتناب از نام‌های پیچیده؛ همیشه camelCase برای props/emit در Vue.
+  
+- **استایل مدرن و UI-driven:**
+  - استفاده از کلاس‌های Tailwind/Vuetify برای مدرن بودن (grid, flex, transitions).
+  - اگر UI mockup (e.g., image/PDF) داده شود، کامپوننت دقیقاً مطابق آن باشد (رنگ‌ها، spacing، animations).
+  - RTL support: استفاده از directives مانند `dir="rtl"` یا config در ساختار.
+
+- **ادغام با ساختار پروژه:**
+  - کامپوننت‌ها در `src/components` ذخیره شوند (e.g., `Button.vue`, `DynamicCombo.vue`).
+  - Models/interfaces در `src/models` برای typing props (e.g., `ButtonProps.ts`).
+  - اگر کامپوننت نیاز به state عمومی دارد، از Pinia store در `src/store` استفاده شود (با persist اگر لازم).
+  - API calls: اگر کامپوننت data fetch کند، از functions در `src/api/component_functions` (برای جلوگیری از تکرار، بر اساس ساختار).
+  - Policy: اگر کامپوننت دسترسی نیاز دارد، از `src/policy` استفاده شود (e.g., `gate('viewButton')`).
+  - Router integration: اگر کامپوننت بخشی از view باشد، در `src/views` و routes در `src/router`.
+
+### 3. نیازمندی‌های غیرعملکردی (Non-Functional Requirements)
+- **عملکرد:** کامپوننت‌ها lazy-loaded باشند (با `() => import()` در routes یا components).
+- **امنیت:** استفاده از policy برای دسترسی، و validation در inputs (از `component_functions/rules_functions.ts` در ساختار).
+- **قابلیت استفاده (Usability):** کامپوننت‌ها accessible (ARIA attributes)، responsive (mobile-first).
+- **نگهداری:** Documentation در کامپوننت (JSDoc برای props)، و tests با ESLint.
+- **محیط:** سازگار با .env (e.g., VITE_BASE_URL برای API) و modes (dev/prod) در vite.config.js.
+
+### 4. اولویت‌بندی ویژگی‌ها (Prioritization)
+- Must-have: داینامیک تم، props/emit ساده، ادغام با ساختار folders.
+- Should-have: داینامیک combobox/data، modern style.
+- Nice-to-have: Animations/transitions، integration with iframe (اگر در ساختار نیاز باشد).
+
+### 5. ریسک‌ها و وابستگی‌ها
+- ریسک: عدم سازگاری با ورژن‌های قدیمی Vue/Packages – mitigation: استفاده از packages پیشنهادی در ساختار (Axios, Vuetify, etc.).
+- وابستگی: دسترسی به UI mockups برای دقیق بودن، و backend API برای data داینامیک.
+
+## System Design
+
+### 1. معماری کلی (High-Level Architecture)
+- **لایه‌ها بر اساس ساختار پروژه (`structure.txt`):**
+  - **Presentation Layer:** کامپوننت‌ها در `src/components` (reusable مانند `DynamicButton.vue`) و views در `src/views` (صفحات خاص).
+  - **Data Layer:** Models در `src/models` برای typing (e.g., interface Props { theme: string; }).
+  - **State Management:** Pinia stores در `src/store` برای تم‌های عمومی یا data persist (با pinia-plugin-persistedstate).
+  - **Routing:** Routes در `src/router` با meta برای policy (e.g., requiresAuth).
+  - **API Layer:** Calls در `src/api` با config (baseURL از .env)، validations, transformers.
+  - **Policy Layer:** دسترسی در `src/policy` (gate functions).
+  - **Config Layer:** تم‌ها در `plugins` (e.g., vuetify.ts با colors dynamic).
+
+- **جریان داده (Data Flow):**
+  1. Import کامپوننت در view/component دیگر.
+  2. Pass props برای شخصی‌سازی (e.g., <DynamicCombo :items="dynamicItems" @select="handleSelect"/>).
+  3. کامپوننت data را از store/API fetch می‌کند اگر لازم.
+  4. Emits رویدادها به parent.
+  5. تم از store یا props تغییر می‌کند و CSS variables update می‌شود.
+
+### 2. طراحی کامپوننت (Component Design)
+برای هر کامپوننتی (با هر مفهومی مانند Button, Table, Modal):
+- **Template (HTML):** استفاده از slots برای داینامیک محتوا (e.g., <slot name="content"/>).
+- **Script (TS):** Define props با defaults/types (از models)، computed برای داینامیک values، methods برای logic، emits برای events.
+- **Style (Scoped CSS):** استفاده از variables برای تم (e.g., background: var(--primary-color);). اگر Vuetify، از v-theme.
+- **مثال عمومی برای یک کامپوننت (DynamicButton.vue):**
+  ```vue
+  <template>
+    <button :class="buttonClass" :disabled="disabled" @click="$emit('click', $event)">
+      <slot>{{ label }}</slot>
+    </button>
+  </template>
+
+  <script lang="ts" setup>
+  import { computed } from 'vue';
+  import type { ButtonProps } from '@/models/ButtonProps'; // از src/models
+
+  const props = withDefaults(defineProps<ButtonProps>(), {
+    label: 'Button',
+    theme: 'primary',
+    disabled: false
+  });
+
+  defineEmits<{ click: [event: MouseEvent] }>(); // emits ساده
+
+  const buttonClass = computed(() => `btn-${props.theme} modern-style`); // داینامیک class بر اساس تم
+  </script>
+
+  <style scoped>
+  .btn-primary { background: var(--v-theme-primary); } /* از plugins config */
+  .modern-style { border-radius: 8px; transition: all 0.3s; } /* مدرن */
+  </style>
+  ```
+- **داینامیک تم:** در App.vue (بر اساس ساختار)، تم را از store لود کنید و variables را set کنید (e.g., document.documentElement.style.setProperty('--v-theme-primary', '#6200EE')).
+- **داینامیک Combo:** برای <DynamicCombo>، props: items (Array), value (any), onChange (emit).
+- **Validation/Rules:** از `component_functions/rules_functions.ts` import کنید.
+
+### 3. پیاده‌سازی گام‌به‌گام
+1. فولدر کامپوننت را در `src/components` ایجاد کنید.
+2. Model را در `src/models` تعریف کنید.
+3. اگر API نیاز، function را در `src/api/component_functions` بنویسید.
+4. Policy را اگر لازم، در `src/policy` اضافه کنید.
+5. در view import و استفاده کنید.
+6. تست: npm run dev، چک داینامیک بودن با props مختلف.
+
+### 4. ابزارها و تکنولوژی‌ها
+- Vue 3 + TS (از ساختار).
+- UI Lib: Vuetify/Tailwind (با RTL).
+- State: Pinia با persist.
+- API: Axios با interceptors (از src/api/config).
+- Build: Vite با .env و base path.
+
+این طراحی عمومی است و برای هر کامپوننتی اعمال می‌شود. اگر کامپوننت خاصی (مثل Table) نیاز به جزئیات بیشتر دارد، mockup یا نیازهای اضافی ارائه دهید.
